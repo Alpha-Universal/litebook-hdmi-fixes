@@ -1,0 +1,91 @@
+################################
+############ INTRO #############
+################################
+
+This info file is included within litebook-hdmi-fixes_*_all.deb, and details 
+how to use the following scripts:
+
+/etc/litebook-scripts/scripts/hdmi/litebook-hdmi-setup.sh
+/etc/litebook-scripts/scripts/hdmi/litebook-hdmi-start.sh
+/etc/litebook-scripts/scripts/hdmi/litebook-hdmi-stop.sh
+/etc/litebook-scripts/scripts/hdmi/litebook-hdmi-adjuster.sh
+
+Several template files are also included in this deb, but they shouldn't be 
+edited in any way, as the above scripts will modify them as needed, and 
+misplaced edits can break X.
+
+
+################################
+### PURPOSE AND CAPABILITIES ### 
+################################
+
+As of late May 2017, the Litebook's Intel HD 400 integrated graphics is incapable 
+of automatically outputting an HDMI signal.  The reason why is unknown, but until 
+a proper upstream fix is made, this interim fix manually enables HDMI for the 
+Litebook (and feasibly for any other Intel HD 400 device).  
+
+These scripts are able to:
+
+    * Install multiple monitors
+    * Work for any single user logged in, no matter their user ID
+    * Enable highly dynamic monitor configuration 
+    * Respect graphical security measures and existing Litebook display configurations
+
+These scripts cannot:
+
+	* Allow HDMI monitors to be configured through system settings GUIs
+	* Automatically configure monitors and enable/disable HDMI output
+	* Be run automatically on login (planned feature)
+	
+
+################################
+#### INSTALLATION AND USAGE ####
+################################
+
+These scripts must be run in a specific order, which is:
+
+    cd /etc/litebook-scripts/scripts/hdmi
+    sudo ./litebook-hdmi-setup.sh
+    sudo reboot
+    ./litebook-hdmi-start.sh
+    ./litebook-hdmi-adjuster.sh
+
+litebook-hdmi-setup.sh is the _only_ script that requires sudo privileges, and 
+litebook-hdmi-adjuster.sh is optional, but will almost certainly need to be run
+to fix overscan/underscan problems.
+
+
+################################
+####### POST-SETUP INFO ########
+################################
+
+After running litebook-hdmi-setup.sh and litebook-hdmi-start.sh, the startup script 
+for your configured monitor will be installed in ~/bin/litebook/.  Simply execute 
+this script after every reboot to initialize HDMI output.  You won't need to run 
+litebook-hdmi-setup.sh or litebook-hdmi-start.sh anymore, unless you want to 
+set up additional monitors.
+
+A script called litebook-hdmi-stop is also installed in ~/bin/litebook/, which is 
+needed to terminate all HDMI output.  If you unplug your HDMI monitor and don’t 
+run this script, the system will behave as if the HDMI output were _still_ enabled 
+(i.e. programs opening in the missing screen, mouse running off the Litebook’s 
+screen, etc).
+
+If you’ve enabled HDMI and are plugging your Litebook into a TV, then before 
+running litebook-hdmi-adjuster.sh, go into your TV’s options menu and adjust the 
+aspect ratio there.  Different manufacturers call this menu option different 
+things, so be sure to search for Aspect, Theater Settings, Widescreen Settings, 
+or etc.
+
+
+################################
+######### KNOWN ISSUES #########
+################################
+
+When running litebook-hdmi-adjuster.sh, there is a small chance that the system 
+will crash after running too many consecutive transformations.  This happened to 
+me twice out of 40+ transforms (which I was running in very quick succession, 
+something that my adjuster script rate-limits to a degree).  
+
+If this happens to you, hit control+alt+F1, log into the TTY, and execute this: 
+sudo systemctl restart lightdm.service. 
