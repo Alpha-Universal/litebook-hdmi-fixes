@@ -9,14 +9,14 @@
 set -o errexit      # exits if non-true exit status is returned
 set -o nounset      # exits if unset vars are present
 
+PATH=/usr/local/bin:/usr/bin:/bin:/sbin:/usr/sbin:/usr/local/sbin
+
 # fail if not running as root
 if [[ $EUID -ne 0 ]] ; then
 	echo "This is the _only_ litebook-hdmi script that requires root privileges." ;
 	echo "Please re-run this script with sudo." ;
 	exit 1 ;
 fi
-
-PATH=/usr/local/bin:/usr/bin:/bin:/sbin:/usr/sbin:/usr/local/sbin
 
 cur_user="$(who | grep ":0" | cut -f 1 -d ' ' | uniq)"
 
@@ -42,6 +42,7 @@ while true ; do
 		echo "The monitor nickname must be one word or separated by underscores"
 	fi
 done
+
 echo
 echo "${mon_nick} assigned.  Continuing setup.
 Testing if HDMI is connected"
@@ -51,10 +52,14 @@ echo
 cp /etc/litebook-scripts/scripts/hdmi/99-hdmi-xorg-template.txt \
 	/etc/litebook-scripts/scripts/hdmi/99-"${mon_nick}"-hdmi.tmp
 
-# begin configuring final HDMI startup script
+# begin configuring final HDMI startup script and directory structure
 if [[ ! -d /home/"${cur_user}"/bin/litebook ]] ; then
 	sudo -u "${cur_user}" mkdir -p /home/"${cur_user}"/bin/litebook
 fi
+if [[ ! -d /etc/X11/xorg.conf.d ]] ; then
+	mkdir /etc/X11/xorg.conf.d
+fi
+mkdir -p /usr/litebook/hdmi-edids
 sudo -u "${cur_user}" cp /etc/litebook-scripts/scripts/hdmi/litebook-hdmi-template.sh \
 	/home/"${cur_user}"/bin/litebook/"${mon_nick}"-hdmi-start.sh
 sudo -u "${cur_user}" cp /etc/litebook-scripts/scripts/hdmi/litebook-hdmi-stop.sh \
@@ -93,7 +98,6 @@ if [[ "${hdmi_test}" =~ "@" ]] ; then
 fi
 
 # grab HDMI monitor EDID, and place findings in usr and xorg.conf.d
-mkdir -p /usr/litebook/hdmi-edids
 echo "Gathering ${mon_nick} monitor information"
 echo
 
