@@ -9,6 +9,8 @@
 set -o errexit      # exits if non-true exit status is returned
 set -o nounset      # exits if unset vars are present
 
+PATH=/usr/local/bin:/usr/bin:/bin:/sbin:/usr/sbin:/usr/local/sbin
+
 # fail _if_ running as root
 if [[ $EUID == 0 ]] ; then
 	echo "This script should not be run with root privileges." ;
@@ -16,10 +18,8 @@ if [[ $EUID == 0 ]] ; then
 	exit 1 ;
 fi
 
-PATH=/usr/local/bin:/usr/bin:/bin:/sbin:/usr/sbin:/usr/local/sbin
-
 mons_avail="$(find /home/"$(whoami)"/bin/litebook/ -type f -name "*hdmi-start.sh" | \
-	sed s/-hdmi-start.sh// | sed "s|/home/$(whoami)/bin/litebook/||")"
+	sed 's/-hdmi-start.sh//' | sed "s|/home/$(whoami)/bin/litebook/||")"
 
 # needed to call the current display
 DISPLAY=:0
@@ -27,7 +27,7 @@ export DISPLAY
 XAUTHORITY=/home/"$(whoami)"/.Xauthority
 export XAUTHORITY
 
-echo "Testing if HDMI is connected Please enter your password"
+echo "Testing if HDMI is connected.  Please enter your password"
 echo
 
 hdmi_test="$(sudo -k get-edid | parse-edid | grep Identifier)"
@@ -65,9 +65,11 @@ while true ; do
 	echo "The monitors available are: ${mons_avail}"
 	read -p "which monitor do you want to use : " mon_used
 	if [[ "${mon_used}" =~ ${mons_avail} ]] ; then
+		echo
 		echo "${mon_used} selected.  Continuing to activation." ;
 		break
 	else
+		echo
 		echo "That selection is invalid.  Please choose a listed monitor."
 	fi		
 done
@@ -83,7 +85,7 @@ echo
 echo "Now to position the HDMI output.  
 Do you want to mirror or extend the Litebook screen?"
 echo
-select pos in "Mirror-display" "Extend-right" "Extend-down"; do
+select pos in "Mirror-display" "Extend-right" "Extend-down" ; do
 	case $pos in
 		Mirror-display ) 
 			echo "Mirroring current display"
