@@ -62,10 +62,10 @@ sudo -u "${cur_user}" cp /etc/litebook-scripts/scripts/hdmi/litebook-hdmi-stop.s
 chown "${cur_user}":"${cur_user}" /home/"${cur_user}"/bin/litebook/litebook-hdmi-stop.sh
 
 # var to establish HDMI status, now that read-edid is installed
-hdmi_test="$(get-edid | parse-edid | grep Identifier | grep @ || echo "")"
+hdmi_test="$(get-edid | parse-edid | grep Identifier)"
 
 # ensure that HDMI is plugged in
-if [[ -n "${hdmi_test}" ]] ; then
+if [[ "${hdmi_test}" =~ "@" ]] ; then
 	echo "HDMI must be plugged in to complete HDMI setup."
 	echo "Please connect your HDMI device and select Continue."
 	select cont in "Continue" "Exit" ; do
@@ -73,14 +73,16 @@ if [[ -n "${hdmi_test}" ]] ; then
 			Continue ) 
 				hdmi_test="$(get-edid | parse-edid | grep Identifier)"
 				if [[ "${hdmi_test}" =~ "@" ]] ; then
+					echo
 					echo "HDMI device not found."
 				else
+					echo
 					echo "HDMI device found.  Continuing setup."
 					break
 				fi
 				;;
 			Exit ) 
-				echo "Exiting the HDMI startup process."
+				echo "Exiting the HDMI setup process."
 				exit 0
 				;;
 			* )
