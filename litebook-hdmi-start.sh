@@ -126,6 +126,8 @@ not retain settings on its own.  If you reboot, HDMI output _will not_ work with
 running this script. 
 
 If you have any overscan/underscan issues, they can be fixed by running
-/etc/litebook-scripts/scripts/litebook-hdmi-output-adjuster.sh"
+/etc/litebook-scripts/scripts/litebook-hdmi-output-adjuster.sh.
+
+For further info, please consult /etc/litebook-scripts/info/litebook-hdmi-fixes.info"
 
 exit 0
