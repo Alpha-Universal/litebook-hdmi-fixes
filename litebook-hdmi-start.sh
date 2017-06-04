@@ -102,20 +102,20 @@ select pos in "Mirror-display" "Extend-right" "Extend-down" ; do
 	esac
 done
 
-# set position in home HDMI template
-sed -i "s/--POS/${mon_pos}/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh
-
-# set magnification based on position with known working values
+# set the position and magnification (mag uses known working values based on position)
 if [[ "${mon_pos}" == "m" ]] ; then
-	xrandr --output HDMI1 --mode "${mon_res}" --transform 1.05,0,0,0,1.05,0,0,0,1 --same-as eDP1
+	sed -i "s/--POS/--same-as eDP1/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh
 	sed -i "s/--TRANS/--transform 1.05,0,0,0,1.05,0,0,0,1/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh
 elif [[ "${mon_pos}" == "r" ]] ; then
-	xrandr --output HDMI1 --mode "${mon_res}" --transform 1.1,0,0,0,1.1,0,0,0,1 --right-of eDP1
+	sed -i "s/--POS/--right-of eDP1/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh
 	sed -i "s/--TRANS/--transform 1.1,0,0,0,1.1,0,0,0,1/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh
 else
-	xrandr --output HDMI1 --mode "${mon_res}" --transform 1.1,0,0,0,1.1,0,0,0,1 --below eDP1
+	sed -i "s/--POS/--below eDP1/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh
 	sed -i "s/--TRANS/--transform 1.1,0,0,0,1.1,0,0,0,1/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh
 fi
+
+# activate the display
+source /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh
 
 # wrap everything up
 echo 
