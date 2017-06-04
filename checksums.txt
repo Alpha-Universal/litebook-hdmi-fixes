@@ -9,7 +9,7 @@ cceadb7a83e5e06206e6a7e2f87ff3fa  litebook-hdmi-fixes.info
 daa1b29ddaf797aac5e56148e2741cf4  litebook-hdmi-setup.sh
 6ec39b735d1f9e9b21e37bdd92799bc1  litebook-hdmi-start.sh
 9314dfbd2da5bc9cf78d402394bf391a  litebook-hdmi-stop.sh
-6ec39b735d1f9e9b21e37bdd92799bc1  litebook-hdmi-start.sh
+773130bad183f8ac1c8beecb5313415c  litebook-hdmi-template.sh
 
 
 ### sha1sums ### 
