@@ -52,7 +52,7 @@ echo
 cp /etc/litebook-scripts/scripts/hdmi/99-hdmi-xorg-template.txt \
 	/etc/litebook-scripts/scripts/hdmi/99-"${mon_nick}"-hdmi.tmp
 
-# begin configuring final HDMI startup script and directory structure
+# configure directory structure
 if [[ ! -d /home/"${cur_user}"/bin/litebook ]] ; then
 	sudo -u "${cur_user}" mkdir -p /home/"${cur_user}"/bin/litebook
 fi
@@ -60,6 +60,8 @@ if [[ ! -d /etc/X11/xorg.conf.d ]] ; then
 	mkdir /etc/X11/xorg.conf.d
 fi
 mkdir -p /usr/litebook/hdmi-edids
+
+# configure final HDMI start and stop scripts
 sudo -u "${cur_user}" cp /etc/litebook-scripts/scripts/hdmi/litebook-hdmi-template.sh \
 	/home/"${cur_user}"/bin/litebook/"${mon_nick}"-hdmi-start.sh
 sudo -u "${cur_user}" cp /etc/litebook-scripts/scripts/hdmi/litebook-hdmi-stop.sh \
@@ -101,7 +103,6 @@ fi
 echo "Gathering ${mon_nick} monitor information"
 echo
 
-
 get-edid > /usr/litebook/hdmi-edids/"${mon_nick}".bin
 sed -i "s|edids/|edids/${mon_nick}.bin|" /etc/litebook-scripts/scripts/hdmi/99-"${mon_nick}"-hdmi.tmp
 
@@ -139,7 +140,7 @@ done
 if [[ "${cust_res}" == 1 ]] ; then
 	while true ; do
 	read -p "What is the monitor resolution?  Please enter as 1234x5678 : " mon_res
-		if [[ -n "$(echo "${mon_res}" | grep -E "[0-9]x[0-9]")" ]] ; then
+		if [[ -n "$(echo "${mon_res}" | grep -E "[0-9]{1,16}x[0-9]{1,16}")" ]] ; then
 			echo "OK, using ${mon_res} as the new resolution"
 			break
 		else
@@ -152,7 +153,9 @@ fi
 # modify base HDMI config
 sed -i "s/DisplaySize /DisplaySize ${disp_size}/" /etc/litebook-scripts/scripts/hdmi/99-"${mon_nick}"-hdmi.tmp
 sed -i "s/Modeline \"1920x1080_60.00\"/Modeline \"1920x1080_60.00\" ${mlines}/" /etc/litebook-scripts/scripts/hdmi/99-"${mon_nick}"-hdmi.tmp
-if [[ -n "${cust_res}" ]] ; then
+
+# modify resolution, if custom res is specified
+if [[ "${cust_res}" == 1 ]] ; then
 	sed -i "s/1920x1080_60.00/${cust_res}_60.00/g" /etc/litebook-scripts/scripts/hdmi/99-"${mon_nick}"-hdmi.tmp ;
 	sed -i "s/1920x1080/${cust_res}/g" /home/"${cur_user}"/bin/litebook/"${mon_nick}"-hdmi-start.sh ;
 fi	
