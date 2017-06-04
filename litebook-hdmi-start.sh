@@ -74,12 +74,6 @@ while true ; do
 	fi		
 done
 
-# define resolution, now that we know which monitor is used
-mon_res="$(grep -Eo "[0-9]{1,16}x[0-9]{1,16}" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh | uniq)"
-
-# establish HDMI output via xrandr
-xrandr --addmode HDMI1 "${mon_res}"
-
 # establish HDMI screen position
 echo
 echo "Now to position the HDMI output.  
