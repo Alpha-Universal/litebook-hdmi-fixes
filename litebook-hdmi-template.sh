@@ -10,14 +10,14 @@
 set -o errexit      # exits if non-true exit status is returned
 set -o nounset      # exits if unset vars are present
 
+PATH=/usr/local/bin:/usr/bin:/bin:/sbin:/usr/sbin:/usr/local/sbin
+
 # fail _if_ running as root
 if [[ $EUID == 0 ]] ; then
 	echo "This script should not be run with root privileges." ;
 	echo "Please re-run this script without sudo." ;
 	exit 1 ;
 fi
-
-PATH=/usr/local/bin:/usr/bin:/bin:/sbin:/usr/sbin:/usr/local/sbin
 
 # needed to call the current display
 DISPLAY=:0
