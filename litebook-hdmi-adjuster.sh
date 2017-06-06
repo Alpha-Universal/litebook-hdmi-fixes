@@ -84,11 +84,14 @@ cp /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh \
 chmod +x /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp
 
 # grab resolution and position, now that we know which monitor is used
-mon_res="$(grep -Eo "[0-9]{1,16}x[0-9]{1,16}" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh | uniq)"
-mon_pos="$(grep transform /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh | awk '{ print $8, $9 }')"
+mon_res="$(grep -Eo "[0-9]{1,16}x[0-9]{1,16}" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp | uniq)"
+mon_pos="$(grep transform /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp | awk '{ print $8, $9 }')"
+
+# transform vars for testing and the kept result, respectively
+tmp_trans="$(grep transform /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp | awk '{ print $7 }')"
+replaced_trans="$(grep transform /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh | awk '{ print $7 }')"
 
 # establish adjustment vars, now that monitor has been determined
-mon_trans="$(grep transform /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh | awk '{ print $7 }')"
 x_pos="$(echo "${mon_trans}" | cut -d "," -f 3)"
 y_pos="$(echo "${mon_trans}" | cut -d "," -f 6)"
 x_mag="$(echo "${mon_trans}" | cut -d "," -f 1)"
@@ -262,17 +265,10 @@ while true ; do
 	done	
 
 # apply transformations
-	final_transform="${x_mag}",0,"${x_pos}",0,"${y_mag}","${y_pos}",0,0,1
-	
-
+	test_trans="${x_mag}",0,"${x_pos}",0,"${y_mag}","${y_pos}",0,0,1
 	echo "Applying specified transformations"
-	if [[ "$(echo "${mon_pos}" | grep "same")" ]] ; then
-		xrandr --output HDMI1 --mode "${mon_res}" --transform "${final_transform}" --same-as eDP1
-	elif [[ "$(echo "${mon_pos}" | grep "right")" ]] ; then
-		xrandr --output HDMI1 --mode "${mon_res}" --transform "${final_transform}" --right-of eDP1
-	else
-		xrandr --output HDMI1 --mode "${mon_res}" --transform "${final_transform}" --below eDP1
-	fi
+	sed -i "s/${tmp_trans}/${test_trans}/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp	
+	source /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp
 
 # confirm results, quit, or enable further adjustments
 	echo "Would you like to make more adjustments, keep this result, 
@@ -297,7 +293,7 @@ while true ; do
 				;;
 			Keep-result)
 				echo "OK, keeping specified adjustments."
-				sed -i "s/${mon_trans}/${final_transform}/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh
+				sed -i "s/${replaced_trans}/${test_trans}/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh	
 				exit 0
 				;;			
 			Revert-adjustments)
@@ -306,8 +302,9 @@ while true ; do
 				y_pos="${old_y}"
 				x_mag="${old_x_mag}"
 				y_mag="${old_y_mag}"
-				final_transform="${x_mag}",0,"${x_pos}",0,"${y_mag}","${y_pos}",0,0,1
-				xrandr --output HDMI1 --mode "${mon_res}" --transform "${final_transform}" "${mon_pos}"
+				test_trans="${x_mag}",0,"${x_pos}",0,"${y_mag}","${y_pos}",0,0,1
+				sed -i "s/${tmp_trans}/${test_trans}/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp	
+				source /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp
 				break
 				;;
 			Reset-adjustments)
@@ -316,8 +313,9 @@ while true ; do
 				y_pos="${orig_y}"
 				x_mag="${orig_x_mag}"
 				y_mag="${orig_y_mag}"
-				final_transform="${orig_x_mag}",0,"${orig_x}",0,"${orig_y_mag}","${orig_y}",0,0,1
-				xrandr --output HDMI1 --mode "${mon_res}" --transform "${final_transform}" "${mon_pos}"
+				test_trans="${orig_x_mag}",0,"${orig_x}",0,"${orig_y_mag}","${orig_y}",0,0,1
+				sed -i "s/${tmp_trans}/${test_trans}/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp	
+				source /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp
 				break
 				;;
 			Undo-adjustments)
@@ -326,8 +324,9 @@ while true ; do
 				y_pos=0
 				x_mag=0
 				y_mag=0
-				final_transform="${x_mag}",0,"${x_pos}",0,"${y_mag}","${y_pos}",0,0,1
-				xrandr --output HDMI1 --mode "${mon_res}" --transform none "${mon_pos}"
+				test_trans="${x_mag}",0,"${x_pos}",0,"${y_mag}","${y_pos}",0,0,1
+				sed -i "s/${tmp_trans}/${test_trans}/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp	
+				source /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp
 				break
 				;;
 			Quit)
