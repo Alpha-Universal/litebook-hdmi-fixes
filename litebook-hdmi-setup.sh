@@ -156,8 +156,8 @@ sed -i "s/Modeline \"1920x1080_60.00\"/Modeline \"1920x1080_60.00\" ${mlines}/" 
 
 # modify resolution, if custom res is specified
 if [[ "${cust_res}" == 1 ]] ; then
-	sed -i "s/1920x1080_60.00/${cust_res}_60.00/g" /etc/litebook-scripts/scripts/hdmi/99-"${mon_nick}"-hdmi.tmp ;
-	sed -i "s/1920x1080/${cust_res}/g" /home/"${cur_user}"/bin/litebook/"${mon_nick}"-hdmi-start.sh ;
+	sed -i "s/1920x1080_60.00/${mon_res}_60.00/g" /etc/litebook-scripts/scripts/hdmi/99-"${mon_nick}"-hdmi.tmp ;
+	sed -i "s/1920x1080/${mon_res}/g" /home/"${cur_user}"/bin/litebook/"${mon_nick}"-hdmi-start.sh ;
 fi	
 
 # install finished HDMI and eDP templates into xorg.conf.d
