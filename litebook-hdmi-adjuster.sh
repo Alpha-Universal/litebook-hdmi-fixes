@@ -77,7 +77,7 @@ while true ; do
 	fi		
 done
 
-# create safe copy of existing HDMI start script, used to test transformations
+# create a safe copy of existing HDMI start script, used to test transformations
 # until user is happy with the result
 cp /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh \
 	/home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp
@@ -87,7 +87,7 @@ chmod +x /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp
 mon_res="$(grep -Eo "[0-9]{1,16}x[0-9]{1,16}" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp | uniq)"
 mon_pos="$(grep transform /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp | awk '{ print $8, $9 }')"
 
-# transform vars for testing and the kept result, respectively
+# transform vars for testing and keeping results, respectively
 tmp_trans="$(grep transform /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp | awk '{ print $7 }')"
 replaced_trans="$(grep transform /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh | awk '{ print $7 }')"
 
@@ -101,7 +101,7 @@ old_y=""
 old_x_mag=""
 old_y_mag=""
 
-# adjustment vars for resetting adjustments
+# adjustment vars for resetting all adjustments
 orig_x="$(echo "${mon_trans}" | cut -d "," -f 3)"
 orig_y="$(echo "${mon_trans}" | cut -d "," -f 6)"
 orig_x_mag="$(echo "${mon_trans}" | cut -d "," -f 1)"
@@ -148,10 +148,10 @@ while true ; do
 	
 	If your desktop fits within the HDMI monitor, but your mouse hits an
 	invisible boundary before the physical edge, then select to only adjust
-	the magication"
+	the magnification"
 	echo
 	echo "Set the pixels to be shifted:"
-	select adj in "5px" "10px" "15px" "20px" "Skip-to-magication" ; do
+	select adj in "5px" "10px" "15px" "20px" "Skip-to-magnification" ; do
 		case $adj in
 			5px ) 
 				echo "5px set"
@@ -173,7 +173,7 @@ while true ; do
 				px_count=20
 				break
 				;;
-			Skip-to-magication )
+			Skip-to-magnification )
 				echo "Skipping pixel adjustments"
 				px_skip="1"
 				break
@@ -217,11 +217,11 @@ while true ; do
 			esac
 		done
 	fi
-	echo "Set the magication:"
+	echo "Set the magnification:"
 	select mag in "0.05" "0.1" "-0.05" "-0.1" "Skip-to-finish"; do 
 		case $mag in 
 			0.05 )
-				echo "Increasing magication by 0.05"
+				echo "Increasing magnification by 0.05"
 				old_x_mag="${x_mag}"
 				old_y_mag="${y_mag}"
 				x_mag=$(bc <<< "${x_mag}"+0.05)
@@ -229,7 +229,7 @@ while true ; do
 				break
 				;;
 			0.1 )
-				echo "Increasing magication by 0.1"
+				echo "Increasing magnification by 0.1"
 				old_x_mag="${x_mag}"
 				old_y_mag="${y_mag}"
 				x_mag=$(bc <<< "${x_mag}"+0.1)
@@ -237,7 +237,7 @@ while true ; do
 				break
 				;;
 			-0.05 )
-				echo "Reducing magication by 0.05"
+				echo "Reducing magnification by 0.05"
 				old_x_mag="${x_mag}"
 				old_y_mag="${y_mag}"
 				x_mag=$(bc <<< "${x_mag}"-0.05)
@@ -245,7 +245,7 @@ while true ; do
 				break
 				;;
 			-0.1 )
-				echo "Reducing magication by 0.1"
+				echo "Reducing magnification by 0.1"
 				old_x_mag="${x_mag}"
 				old_y_mag="${y_mag}"
 				x_mag=$(bc <<< "${x_mag}"-0.1)
@@ -279,19 +279,19 @@ while true ; do
 	* Quit will exit _without_ saving.
 	
 	* Revert-adjustments rolls your adjustments back by one level.
-	* Reset-adjustments takes all adjustments to their starting point.
-	* Undo-adjustments turns all directional adjustments to zero.  	
+	* Reset-adjustments returns adjustments to their starting point.
+	* Undo-adjustments changes all directional adjustments to zero.  	
 	
 	Changes will _not_ be saved until Keep-result is selected."
 	echo
-	select resp in "More-adjustments" "Keep-result" "Revert-adjustments" \
+	select resp in "More-adjustments" "Keep-results" "Revert-adjustments" \
 	"Reset-adjustments" "Undo-adjustments" "Quit" ; do
 		case $resp in 
 			More-adjustments)
 				echo "Enabling further adjustments."	
 				break
 				;;
-			Keep-result)
+			Keep-results)
 				echo "OK, keeping specified adjustments."
 				sed -i "s/${replaced_trans}/${test_trans}/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh	
 				exit 0
