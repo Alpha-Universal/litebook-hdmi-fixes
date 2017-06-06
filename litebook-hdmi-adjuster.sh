@@ -94,6 +94,7 @@ orig_x_mag="$(echo "${mon_trans}" | cut -d "," -f 1)"
 orig_y_mag="$(echo "${mon_trans}" | cut -d "," -f 5)"
 
 # set directional vars and determine human-readable direction
+# left and down are negative transform values, while right and up are positive
 lr_dir=""
 ud_dir=""
 until [ -n "${lr_dir}" -a -n "${ud_dir}" ] ; do
@@ -135,13 +136,8 @@ while true ; do
 	the magication"
 	echo
 	echo "Set the pixels to be shifted:"
-	select adj in "0px" "5px" "10px" "15px" "20px" "Skip-to-magication" ; do
+	select adj in "5px" "10px" "15px" "20px" "Skip-to-magication" ; do
 		case $adj in
-			0px ) 
-				echo "0px set"
-				px_count=0
-				break
-				;;
 			5px ) 
 				echo "5px set"
 				px_count=5
