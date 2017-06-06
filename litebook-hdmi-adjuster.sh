@@ -77,6 +77,12 @@ while true ; do
 	fi		
 done
 
+# create safe copy of existing HDMI start script, used to test transformations
+# until user is happy with the result
+cp /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh \
+	/home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp
+chmod +x /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp
+
 # grab resolution and position, now that we know which monitor is used
 mon_res="$(grep -Eo "[0-9]{1,16}x[0-9]{1,16}" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh | uniq)"
 mon_pos="$(grep transform /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh | awk '{ print $8, $9 }')"
@@ -257,6 +263,8 @@ while true ; do
 
 # apply transformations
 	final_transform="${x_mag}",0,"${x_pos}",0,"${y_mag}","${y_pos}",0,0,1
+	
+
 	echo "Applying specified transformations"
 	if [[ "$(echo "${mon_pos}" | grep "same")" ]] ; then
 		xrandr --output HDMI1 --mode "${mon_res}" --transform "${final_transform}" --same-as eDP1
