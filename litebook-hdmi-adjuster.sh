@@ -6,6 +6,11 @@
 #				for the Litebook v1. 
 #
 
+set -o errexit      # exits if non-true exit status is returned
+set -o nounset      # exits if unset vars are present
+
+PATH=/usr/local/bin:/usr/bin:/bin:/sbin:/usr/sbin:/usr/local/sbin
+
 # fail _if_ running as root
 if [[ $EUID == 0 ]] ; then
 	echo "This script should not be run with root privileges." ;
@@ -13,10 +18,12 @@ if [[ $EUID == 0 ]] ; then
 	exit 1 ;
 fi
 
-PATH=/usr/local/bin:/usr/bin:/bin:/sbin:/usr/sbin:/usr/local/sbin
-
+# finds all HDMI monitor scripts installed in ~/bin/litebook, and strips their
+# extensions and file paths
 mons_avail="$(find /home/"$(whoami)"/bin/litebook/ -type f -name "*hdmi-start.sh" | \
 	sed s/-hdmi-start.sh// | sed "s|/home/$(whoami)/bin/litebook/||")"
+
+# vars for setting or skipping pixel adjustments
 px_count=0
 px_skip=""
 
@@ -25,9 +32,6 @@ DISPLAY=:0
 export DISPLAY
 XAUTHORITY=/home/"$(whoami)"/.Xauthority
 export XAUTHORITY
-
-set -o errexit      # exits if non-true exit status is returned
-set -o nounset      # exits if unset vars are present
 
 echo "Testing if HDMI is connected Please enter your password"
 echo
@@ -41,6 +45,7 @@ if [[ "${hdmi_test}" =~ "@" ]] ; then
 	select cont in "Continue" "Exit" ; do
 		case $cont in
 			Continue ) 
+				# reload the var
 				hdmi_test="$(sudo -k get-edid | parse-edid | grep Identifier)"
 				if [[ "${hdmi_test}" =~ "@" ]] ; then
 					echo "HDMI device not found."
@@ -93,7 +98,7 @@ orig_y="$(echo "${mon_trans}" | cut -d "," -f 6)"
 orig_x_mag="$(echo "${mon_trans}" | cut -d "," -f 1)"
 orig_y_mag="$(echo "${mon_trans}" | cut -d "," -f 5)"
 
-# set directional vars and determine human-readable direction
+# set directional vars and determine a human-readable direction
 # left and down are negative transform values, while right and up are positive
 lr_dir=""
 ud_dir=""
@@ -124,12 +129,13 @@ echo "the ${mon_used} monitor currently has the following adjustments:"
 echo "${x_mag} magnification."
 echo "${x_pos} ${lr_dir}" 
 echo "${y_pos} ${ud_dir}" 
+echo
 
 # enable user-specified transformations
 while true ; do
 	echo "Adjustments take place in three parts. 
 	
-	Pixels are specified first, direction second, and magication last. 
+	Pixels are specified first, direction second, and magnification last. 
 	
 	If your desktop fits within the HDMI monitor, but your mouse hits an
 	invisible boundary before the physical edge, then select to only adjust
@@ -260,7 +266,7 @@ while true ; do
 		xrandr --output HDMI1 --mode "${mon_res}" --transform "${final_transform}" --below eDP1
 	fi
 
-# confirm results
+# confirm results, quit, or enable further adjustments
 	echo "Would you like to make more adjustments, keep this result, 
 	reset adjustments, revert adjustments, undo adjustments, or quit? 
 	
