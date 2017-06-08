@@ -74,6 +74,16 @@ while true ; do
 	fi		
 done
 
+# run the home directory start script so that xrandr adds the necessary mode
+source /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh
+
+# comment out xrandr newmode call in home dir start script, as it's no longer needed
+sed -i "s/xrandr --newmode/#xrandr --newmode/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh
+
+# uncomment xrandr addmode and output calls within home dir start script
+sed -i "s/#xrandr --addmode/xrandr --addmode/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh
+sed -i "s/#xrandr --output/xrandr --output/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh
+
 # establish HDMI screen position
 echo
 echo "Now to position the HDMI output.  
