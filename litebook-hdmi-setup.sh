@@ -161,7 +161,7 @@ if [[ "${cust_res}" == 1 ]] ; then
 fi	
 
 # set the mode in home directory HDMI start script
-sed -i "s/60.00 /60.00 ${mlines}/" /home/"${cur_user}"/bin/litebook/"${mon_nick}"-hdmi-start.sh
+sed -i "s/60.00\" /60.00\" ${mlines}/" /home/"${cur_user}"/bin/litebook/"${mon_nick}"-hdmi-start.sh
 
 # install finished HDMI and eDP templates into xorg.conf.d
 mv /etc/litebook-scripts/scripts/hdmi/99-"${mon_nick}"-hdmi.tmp \
