@@ -28,7 +28,7 @@ export XAUTHORITY
 # needed to set the monitor's mode as part of monitor setup
 # this command only requires a single run, and will be 
 # commented out after
-xrandr --newmode 1920x1080_60.00
+xrandr --newmode "1920x1080_60.00" 
 
 # needed to activate HDMI output after each reboot
 #xrandr --addmode HDMI1 1920x1080
