@@ -293,7 +293,8 @@ while true ; do
 				;;
 			Keep-results)
 				echo "OK, keeping specified adjustments."
-				sed -i "s/${replaced_trans}/${test_trans}/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh	
+				sed -i "s/${replaced_trans}/${test_trans}/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh
+				rm /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp	
 				exit 0
 				;;			
 			Revert-adjustments)
@@ -331,6 +332,7 @@ while true ; do
 				;;
 			Quit)
 				echo "Quitting HDMI adjustment script without saving changes."
+				rm /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp
 				exit 0
 				;;
 			* )
