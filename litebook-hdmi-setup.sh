@@ -104,7 +104,7 @@ echo "Gathering ${mon_nick} monitor information"
 echo
 
 get-edid > /usr/litebook/hdmi-edids/"${mon_nick}".bin
-sed -i "s|edids/|edids/${mon_nick}.bin|" /etc/litebook-scripts/scripts/hdmi/99-"${mon_nick}"-hdmi.tmp
+sed -i "s|edids/|edids/${mon_nick}.bin\"|" /etc/litebook-scripts/scripts/hdmi/99-"${mon_nick}"-hdmi.tmp
 
 # monitor-specific vars
 edid_used="/usr/litebook/hdmi-edids/${mon_nick}.bin"
