@@ -268,7 +268,7 @@ while true ; do
 	test_trans="${x_mag}",0,"${x_pos}",0,"${y_mag}","${y_pos}",0,0,1
 	echo "Applying specified transformations"
 	sed -i "s/${tmp_trans}/${test_trans}/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp	
-	source /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp
+	cd /home/"$(whoami)"/bin/litebook/ && ./"${mon_used}"-hdmi-start.tmp
 
 # confirm results, quit, or enable further adjustments
 	echo "Would you like to make more adjustments, keep this result, 
@@ -304,7 +304,7 @@ while true ; do
 				y_mag="${old_y_mag}"
 				test_trans="${x_mag}",0,"${x_pos}",0,"${y_mag}","${y_pos}",0,0,1
 				sed -i "s/${tmp_trans}/${test_trans}/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp	
-				source /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp
+				cd /home/"$(whoami)"/bin/litebook/ && ./"${mon_used}"-hdmi-start.tmp
 				break
 				;;
 			Reset-adjustments)
@@ -315,7 +315,7 @@ while true ; do
 				y_mag="${orig_y_mag}"
 				test_trans="${orig_x_mag}",0,"${orig_x}",0,"${orig_y_mag}","${orig_y}",0,0,1
 				sed -i "s/${tmp_trans}/${test_trans}/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp	
-				source /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp
+				cd /home/"$(whoami)"/bin/litebook/ && ./"${mon_used}"-hdmi-start.tmp
 				break
 				;;
 			Undo-adjustments)
@@ -326,7 +326,7 @@ while true ; do
 				y_mag=0
 				test_trans="${x_mag}",0,"${x_pos}",0,"${y_mag}","${y_pos}",0,0,1
 				sed -i "s/${tmp_trans}/${test_trans}/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp	
-				source /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp
+				cd /home/"$(whoami)"/bin/litebook/ && ./"${mon_used}"-hdmi-start.tmp
 				break
 				;;
 			Quit)

@@ -75,7 +75,7 @@ while true ; do
 done
 
 # run the home directory start script so that xrandr adds the necessary mode
-source /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh
+cd /home/"$(whoami)"/bin/litebook/ && ./"${mon_used}"-hdmi-start.sh
 
 # comment out xrandr newmode call in home dir start script, as it's no longer needed
 sed -i "s/xrandr --newmode/#xrandr --newmode/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh
@@ -125,7 +125,7 @@ else
 fi
 
 # activate the display
-source /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh
+cd /home/"$(whoami)"/bin/litebook/ && ./"${mon_used}"-hdmi-start.sh
 
 # wrap everything up
 echo 
