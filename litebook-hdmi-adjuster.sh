@@ -89,23 +89,23 @@ mon_pos="$(grep transform /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-star
 
 # transform vars for testing and keeping results, respectively
 tmp_trans="$(grep transform /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp | awk '{ print $7 }')"
-replaced_trans="$(grep transform /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh | awk '{ print $7 }')"
+trans_to_replace="$(grep transform /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh | awk '{ print $7 }')"
 
 # establish adjustment vars, now that monitor has been determined
-x_pos="$(echo "${mon_trans}" | cut -d "," -f 3)"
-y_pos="$(echo "${mon_trans}" | cut -d "," -f 6)"
-x_mag="$(echo "${mon_trans}" | cut -d "," -f 1)"
-y_mag="$(echo "${mon_trans}" | cut -d "," -f 5)"
+x_pos="$(echo "${tmp_trans}" | cut -d "," -f 3)"
+y_pos="$(echo "${tmp_trans}" | cut -d "," -f 6)"
+x_mag="$(echo "${tmp_trans}" | cut -d "," -f 1)"
+y_mag="$(echo "${tmp_trans}" | cut -d "," -f 5)"
 old_x=""
 old_y=""
 old_x_mag=""
 old_y_mag=""
 
 # adjustment vars for resetting all adjustments
-orig_x="$(echo "${mon_trans}" | cut -d "," -f 3)"
-orig_y="$(echo "${mon_trans}" | cut -d "," -f 6)"
-orig_x_mag="$(echo "${mon_trans}" | cut -d "," -f 1)"
-orig_y_mag="$(echo "${mon_trans}" | cut -d "," -f 5)"
+orig_x="$(echo "${trans_to_replace}" | cut -d "," -f 3)"
+orig_y="$(echo "${trans_to_replace}" | cut -d "," -f 6)"
+orig_x_mag="$(echo "${trans_to_replace}" | cut -d "," -f 1)"
+orig_y_mag="$(echo "${trans_to_replace}" | cut -d "," -f 5)"
 
 # set directional vars and determine a human-readable direction
 # left and down are negative transform values, while right and up are positive
@@ -270,6 +270,9 @@ while true ; do
 	sed -i "s/${tmp_trans}/${test_trans}/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp	
 	cd /home/"$(whoami)"/bin/litebook/ && ./"${mon_used}"-hdmi-start.tmp
 
+# reload tmp_trans var for search and replace below
+	tmp_trans="$(grep transform /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp | awk '{ print $7 }')"
+
 # confirm results, quit, or enable further adjustments
 	echo "Would you like to make more adjustments, keep this result, 
 	reset adjustments, revert adjustments, undo adjustments, or quit? 
@@ -293,7 +296,7 @@ while true ; do
 				;;
 			Keep-results)
 				echo "OK, keeping specified adjustments."
-				sed -i "s/${replaced_trans}/${test_trans}/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh
+				sed -i "s/${trans_to_replace}/${test_trans}/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh
 				rm /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp	
 				exit 0
 				;;			
