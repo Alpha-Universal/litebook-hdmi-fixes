@@ -18,8 +18,16 @@ if [[ $EUID == 0 ]] ; then
 	exit 1 ;
 fi
 
+# finds all HDMI monitor scripts installed in ~/bin/litebook, and strips their
+# extensions and file paths
 mons_avail="$(find /home/"$(whoami)"/bin/litebook/ -type f -name "*hdmi-start.sh" | \
 	sed 's/-hdmi-start.sh//' | sed "s|/home/$(whoami)/bin/litebook/||")"
+
+# place truncated HDMI start scripts into an array
+declare -a mon_array=("${mons_avail}")
+
+# make array more readable
+readable_array="$(printf "%s\n" "${mon_array}")"
 
 # needed to call the current display
 DISPLAY=:0
@@ -62,9 +70,9 @@ fi
 
 # determine the monitor we're plugging into
 while true ; do
-	echo "The monitors available are: ${mons_avail}"
+	echo "The monitors available are: ${readable_array}"
 	read -p "which monitor do you want to use : " mon_used
-	if [[ "${mon_used}" =~ ${mons_avail} ]] ; then
+	if [[ "${mon_array[@]}" =~ ${mon_used} ]] ; then
 		echo
 		echo "${mon_used} selected.  Continuing to activation." ;
 		break
