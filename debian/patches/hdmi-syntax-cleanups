@@ -1,0 +1,611 @@
+Description: <short summary of the patch>
+ TODO: Put a short summary on the line above and replace this paragraph
+ with a longer explanation of this change. Complete the meta-information
+ with other relevant fields (see below for details). To make it easier, the
+ information below has been extracted from the changelog. Adjust it or drop
+ it.
+ .
+ litebook-hdmi-fixes (1.1-1) experimental; urgency=low
+ .
+   * Syntax cleanups and info file addition (Closes: #10000)
+   * Fixed typos and syntax errors, refined vars and xrandr calls,
+   * and clarified comments.
+Author: Richard Buchanan II <richard@alpha.store>
+Bug-Debian: https://bugs.debian.org/10000
+
+---
+The information above should follow the Patch Tagging Guidelines, please
+checkout http://dep.debian.net/deps/dep3/ to learn about the format. Here
+are templates for supplementary fields that you might want to add:
+
+Origin: <vendor|upstream|other>, <url of original patch>
+Bug: <url in upstream bugtracker>
+Bug-Debian: https://bugs.debian.org/<bugnumber>
+Bug-Ubuntu: https://launchpad.net/bugs/<bugnumber>
+Forwarded: <no|not-needed|url proving that it has been forwarded>
+Reviewed-By: <name and email of someone who approved the patch>
+Last-Update: <YYYY-MM-DD>
+
+--- litebook-hdmi-fixes-1.1.orig/litebook-hdmi-adjuster.sh
++++ litebook-hdmi-fixes-1.1/litebook-hdmi-adjuster.sh
+@@ -6,6 +6,11 @@
+ #				for the Litebook v1. 
+ #
+ 
++set -o errexit      # exits if non-true exit status is returned
++set -o nounset      # exits if unset vars are present
++
++PATH=/usr/local/bin:/usr/bin:/bin:/sbin:/usr/sbin:/usr/local/sbin
++
+ # fail _if_ running as root
+ if [[ $EUID == 0 ]] ; then
+ 	echo "This script should not be run with root privileges." ;
+@@ -13,10 +18,12 @@ if [[ $EUID == 0 ]] ; then
+ 	exit 1 ;
+ fi
+ 
+-PATH=/usr/local/bin:/usr/bin:/bin:/sbin:/usr/sbin:/usr/local/sbin
+-
++# finds all HDMI monitor scripts installed in ~/bin/litebook, and strips their
++# extensions and file paths
+ mons_avail="$(find /home/"$(whoami)"/bin/litebook/ -type f -name "*hdmi-start.sh" | \
+ 	sed s/-hdmi-start.sh// | sed "s|/home/$(whoami)/bin/litebook/||")"
++
++# vars for setting or skipping pixel adjustments
+ px_count=0
+ px_skip=""
+ 
+@@ -26,9 +33,6 @@ export DISPLAY
+ XAUTHORITY=/home/"$(whoami)"/.Xauthority
+ export XAUTHORITY
+ 
+-set -o errexit      # exits if non-true exit status is returned
+-set -o nounset      # exits if unset vars are present
+-
+ echo "Testing if HDMI is connected Please enter your password"
+ echo
+ 
+@@ -41,6 +45,7 @@ if [[ "${hdmi_test}" =~ "@" ]] ; then
+ 	select cont in "Continue" "Exit" ; do
+ 		case $cont in
+ 			Continue ) 
++				# reload the var
+ 				hdmi_test="$(sudo -k get-edid | parse-edid | grep Identifier)"
+ 				if [[ "${hdmi_test}" =~ "@" ]] ; then
+ 					echo "HDMI device not found."
+@@ -72,28 +77,38 @@ while true ; do
+ 	fi		
+ done
+ 
++# create a safe copy of existing HDMI start script, used to test transformations
++# until user is happy with the result
++cp /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh \
++	/home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp
++chmod +x /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp
++
+ # grab resolution and position, now that we know which monitor is used
+-mon_res="$(grep -Eo "[0-9]{1,16}x[0-9]{1,16}" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh | uniq)"
+-mon_pos="$(grep transform /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh | awk '{ print $8, $9 }')"
++mon_res="$(grep -Eo "[0-9]{1,16}x[0-9]{1,16}" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp | uniq)"
++mon_pos="$(grep transform /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp | awk '{ print $8, $9 }')"
++
++# transform vars for testing and keeping results, respectively
++tmp_trans="$(grep transform /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp | awk '{ print $7 }')"
++trans_to_replace="$(grep transform /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh | awk '{ print $7 }')"
+ 
+ # establish adjustment vars, now that monitor has been determined
+-mon_trans="$(grep transform /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh | awk '{ print $7 }')"
+-x_pos="$(echo "${mon_trans}" | cut -d "," -f 3)"
+-y_pos="$(echo "${mon_trans}" | cut -d "," -f 6)"
+-x_mag="$(echo "${mon_trans}" | cut -d "," -f 1)"
+-y_mag="$(echo "${mon_trans}" | cut -d "," -f 5)"
++x_pos="$(echo "${tmp_trans}" | cut -d "," -f 3)"
++y_pos="$(echo "${tmp_trans}" | cut -d "," -f 6)"
++x_mag="$(echo "${tmp_trans}" | cut -d "," -f 1)"
++y_mag="$(echo "${tmp_trans}" | cut -d "," -f 5)"
+ old_x=""
+ old_y=""
+ old_x_mag=""
+ old_y_mag=""
+ 
+-# adjustment vars for resetting adjustments
+-orig_x="$(echo "${mon_trans}" | cut -d "," -f 3)"
+-orig_y="$(echo "${mon_trans}" | cut -d "," -f 6)"
+-orig_x_mag="$(echo "${mon_trans}" | cut -d "," -f 1)"
+-orig_y_mag="$(echo "${mon_trans}" | cut -d "," -f 5)"
++# adjustment vars for resetting all adjustments
++orig_x="$(echo "${trans_to_replace}" | cut -d "," -f 3)"
++orig_y="$(echo "${trans_to_replace}" | cut -d "," -f 6)"
++orig_x_mag="$(echo "${trans_to_replace}" | cut -d "," -f 1)"
++orig_y_mag="$(echo "${trans_to_replace}" | cut -d "," -f 5)"
+ 
+-# set directional vars and determine human-readable direction
++# set directional vars and determine a human-readable direction
++# left and down are negative transform values, while right and up are positive
+ lr_dir=""
+ ud_dir=""
+ until [ -n "${lr_dir}" -a -n "${ud_dir}" ] ; do
+@@ -123,25 +138,21 @@ echo "the ${mon_used} monitor currently
+ echo "${x_mag} magnification."
+ echo "${x_pos} ${lr_dir}" 
+ echo "${y_pos} ${ud_dir}" 
++echo
+ 
+ # enable user-specified transformations
+ while true ; do
+ 	echo "Adjustments take place in three parts. 
+ 	
+-	Pixels are specified first, direction second, and magication last. 
++	Pixels are specified first, direction second, and magnification last. 
+ 	
+ 	If your desktop fits within the HDMI monitor, but your mouse hits an
+ 	invisible boundary before the physical edge, then select to only adjust
+-	the magication"
++	the magnification"
+ 	echo
+ 	echo "Set the pixels to be shifted:"
+-	select adj in "0px" "5px" "10px" "15px" "20px" "Skip-to-magication" ; do
++	select adj in "5px" "10px" "15px" "20px" "Skip-to-magnification" ; do
+ 		case $adj in
+-			0px ) 
+-				echo "0px set"
+-				px_count=0
+-				break
+-				;;
+ 			5px ) 
+ 				echo "5px set"
+ 				px_count=5
+@@ -162,7 +173,7 @@ while true ; do
+ 				px_count=20
+ 				break
+ 				;;
+-			Skip-to-magication )
++			Skip-to-magnification )
+ 				echo "Skipping pixel adjustments"
+ 				px_skip="1"
+ 				break
+@@ -206,11 +217,11 @@ while true ; do
+ 			esac
+ 		done
+ 	fi
+-	echo "Set the magication:"
++	echo "Set the magnification:"
+ 	select mag in "0.05" "0.1" "-0.05" "-0.1" "Skip-to-finish"; do 
+ 		case $mag in 
+ 			0.05 )
+-				echo "Increasing magication by 0.05"
++				echo "Increasing magnification by 0.05"
+ 				old_x_mag="${x_mag}"
+ 				old_y_mag="${y_mag}"
+ 				x_mag=$(bc <<< "${x_mag}"+0.05)
+@@ -218,7 +229,7 @@ while true ; do
+ 				break
+ 				;;
+ 			0.1 )
+-				echo "Increasing magication by 0.1"
++				echo "Increasing magnification by 0.1"
+ 				old_x_mag="${x_mag}"
+ 				old_y_mag="${y_mag}"
+ 				x_mag=$(bc <<< "${x_mag}"+0.1)
+@@ -226,7 +237,7 @@ while true ; do
+ 				break
+ 				;;
+ 			-0.05 )
+-				echo "Reducing magication by 0.05"
++				echo "Reducing magnification by 0.05"
+ 				old_x_mag="${x_mag}"
+ 				old_y_mag="${y_mag}"
+ 				x_mag=$(bc <<< "${x_mag}"-0.05)
+@@ -234,7 +245,7 @@ while true ; do
+ 				break
+ 				;;
+ 			-0.1 )
+-				echo "Reducing magication by 0.1"
++				echo "Reducing magnification by 0.1"
+ 				old_x_mag="${x_mag}"
+ 				old_y_mag="${y_mag}"
+ 				x_mag=$(bc <<< "${x_mag}"-0.1)
+@@ -254,17 +265,15 @@ while true ; do
+ 	done	
+ 
+ # apply transformations
+-	final_transform="${x_mag}",0,"${x_pos}",0,"${y_mag}","${y_pos}",0,0,1
++	test_trans="${x_mag}",0,"${x_pos}",0,"${y_mag}","${y_pos}",0,0,1
+ 	echo "Applying specified transformations"
+-	if [[ "$(echo "${mon_pos}" | grep "same")" ]] ; then
+-		xrandr --output HDMI1 --mode "${mon_res}" --transform "${final_transform}" --same-as eDP1
+-	elif [[ "$(echo "${mon_pos}" | grep "right")" ]] ; then
+-		xrandr --output HDMI1 --mode "${mon_res}" --transform "${final_transform}" --right-of eDP1
+-	else
+-		xrandr --output HDMI1 --mode "${mon_res}" --transform "${final_transform}" --below eDP1
+-	fi
++	sed -i "s/${tmp_trans}/${test_trans}/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp	
++	cd /home/"$(whoami)"/bin/litebook/ && ./"${mon_used}"-hdmi-start.tmp
++
++# reload tmp_trans var for search and replace below
++	tmp_trans="$(grep transform /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp | awk '{ print $7 }')"
+ 
+-# confirm results
++# confirm results, quit, or enable further adjustments
+ 	echo "Would you like to make more adjustments, keep this result, 
+ 	reset adjustments, revert adjustments, undo adjustments, or quit? 
+ 	
+@@ -273,21 +282,22 @@ while true ; do
+ 	* Quit will exit _without_ saving.
+ 	
+ 	* Revert-adjustments rolls your adjustments back by one level.
+-	* Reset-adjustments takes all adjustments to their starting point.
+-	* Undo-adjustments turns all directional adjustments to zero.  	
++	* Reset-adjustments returns adjustments to their starting point.
++	* Undo-adjustments changes all directional adjustments to zero.  	
+ 	
+ 	Changes will _not_ be saved until Keep-result is selected."
+ 	echo
+-	select resp in "More-adjustments" "Keep-result" "Revert-adjustments" \
++	select resp in "More-adjustments" "Keep-results" "Revert-adjustments" \
+ 	"Reset-adjustments" "Undo-adjustments" "Quit" ; do
+ 		case $resp in 
+ 			More-adjustments)
+ 				echo "Enabling further adjustments."	
+ 				break
+ 				;;
+-			Keep-result)
++			Keep-results)
+ 				echo "OK, keeping specified adjustments."
+-				sed -i "s/${mon_trans}/${final_transform}/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh
++				sed -i "s/${trans_to_replace}/${test_trans}/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh
++				rm /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp	
+ 				exit 0
+ 				;;			
+ 			Revert-adjustments)
+@@ -296,8 +306,9 @@ while true ; do
+ 				y_pos="${old_y}"
+ 				x_mag="${old_x_mag}"
+ 				y_mag="${old_y_mag}"
+-				final_transform="${x_mag}",0,"${x_pos}",0,"${y_mag}","${y_pos}",0,0,1
+-				xrandr --output HDMI1 --mode "${mon_res}" --transform "${final_transform}" "${mon_pos}"
++				test_trans="${x_mag}",0,"${x_pos}",0,"${y_mag}","${y_pos}",0,0,1
++				sed -i "s/${tmp_trans}/${test_trans}/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp	
++				cd /home/"$(whoami)"/bin/litebook/ && ./"${mon_used}"-hdmi-start.tmp
+ 				break
+ 				;;
+ 			Reset-adjustments)
+@@ -306,8 +317,9 @@ while true ; do
+ 				y_pos="${orig_y}"
+ 				x_mag="${orig_x_mag}"
+ 				y_mag="${orig_y_mag}"
+-				final_transform="${orig_x_mag}",0,"${orig_x}",0,"${orig_y_mag}","${orig_y}",0,0,1
+-				xrandr --output HDMI1 --mode "${mon_res}" --transform "${final_transform}" "${mon_pos}"
++				test_trans="${orig_x_mag}",0,"${orig_x}",0,"${orig_y_mag}","${orig_y}",0,0,1
++				sed -i "s/${tmp_trans}/${test_trans}/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp	
++				cd /home/"$(whoami)"/bin/litebook/ && ./"${mon_used}"-hdmi-start.tmp
+ 				break
+ 				;;
+ 			Undo-adjustments)
+@@ -316,12 +328,14 @@ while true ; do
+ 				y_pos=0
+ 				x_mag=0
+ 				y_mag=0
+-				final_transform="${x_mag}",0,"${x_pos}",0,"${y_mag}","${y_pos}",0,0,1
+-				xrandr --output HDMI1 --mode "${mon_res}" --transform none "${mon_pos}"
++				test_trans="${x_mag}",0,"${x_pos}",0,"${y_mag}","${y_pos}",0,0,1
++				sed -i "s/${tmp_trans}/${test_trans}/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp	
++				cd /home/"$(whoami)"/bin/litebook/ && ./"${mon_used}"-hdmi-start.tmp
+ 				break
+ 				;;
+ 			Quit)
+ 				echo "Quitting HDMI adjustment script without saving changes."
++				rm /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.tmp
+ 				exit 0
+ 				;;
+ 			* )
+--- /dev/null
++++ litebook-hdmi-fixes-1.1/litebook-hdmi-fixes.info
+@@ -0,0 +1,91 @@
++################################
++############ INTRO #############
++################################
++
++This info file is included within litebook-hdmi-fixes_*_all.deb, and details 
++how to use the following scripts:
++
++/etc/litebook-scripts/scripts/hdmi/litebook-hdmi-setup.sh
++/etc/litebook-scripts/scripts/hdmi/litebook-hdmi-start.sh
++/etc/litebook-scripts/scripts/hdmi/litebook-hdmi-stop.sh
++/etc/litebook-scripts/scripts/hdmi/litebook-hdmi-adjuster.sh
++
++Several template files are also included in this deb, but they shouldn't be 
++edited in any way, as the above scripts will modify them as needed, and 
++misplaced edits can break X.
++
++
++################################
++### PURPOSE AND CAPABILITIES ### 
++################################
++
++As of late May 2017, the Litebook's Intel HD 400 integrated graphics is incapable 
++of automatically outputting an HDMI signal.  The reason why is unknown, but until 
++a proper upstream fix is made, this interim fix manually enables HDMI for the 
++Litebook (and feasibly for any other Intel HD 400 device). 
++
++These scripts are able to:
++
++    * Install multiple monitors
++    * Work for any single user logged in, no matter their user ID
++    * Enable highly dynamic monitor configuration 
++    * Respect graphical security measures and existing Litebook display configurations
++
++These scripts cannot:
++
++	* Allow HDMI monitors to be configured through system settings GUIs
++	* Automatically configure monitors and enable/disable HDMI output
++	* Be run automatically on login (planned feature)
++	
++
++################################
++#### INSTALLATION AND USAGE ####
++################################
++
++These scripts must be run in a specific order, which is:
++
++    cd /etc/litebook-scripts/scripts/hdmi
++    sudo ./litebook-hdmi-setup.sh
++    sudo reboot
++    ./litebook-hdmi-start.sh
++    ./litebook-hdmi-adjuster.sh
++
++litebook-hdmi-setup.sh is the _only_ script that requires sudo privileges, and 
++litebook-hdmi-adjuster.sh is optional, but will almost certainly need to be run
++to fix overscan/underscan problems.
++
++
++################################
++####### POST-SETUP INFO ########
++################################
++
++After running litebook-hdmi-setup.sh and litebook-hdmi-start.sh, the startup script 
++for your configured monitor will be installed in ~/bin/litebook/.  Simply execute 
++this script after every reboot to initialize HDMI output.  You won't need to run 
++litebook-hdmi-setup.sh or litebook-hdmi-start.sh anymore, unless you want to 
++set up additional monitors.
++
++A script called litebook-hdmi-stop is also installed in ~/bin/litebook/, which is 
++needed to terminate all HDMI output.  If you unplug your HDMI monitor and don’t 
++run this script, the system will behave as if the HDMI output were _still_ enabled 
++(i.e. programs opening in the missing screen, mouse running off the Litebook’s 
++screen, etc).
++
++If you’ve enabled HDMI and are plugging your Litebook into a TV, then before 
++running litebook-hdmi-adjuster.sh, go into your TV’s options menu and adjust the 
++aspect ratio there.  Different manufacturers call this menu option different 
++things, so be sure to search for Aspect, Theater Settings, Widescreen Settings, 
++or etc.
++
++
++################################
++######### KNOWN ISSUES #########
++################################
++
++When running litebook-hdmi-adjuster.sh, there is a small chance that the system 
++will crash after running too many consecutive transformations.  This happened to 
++me twice out of 40+ transforms (which I was running in very quick succession, 
++something that my adjuster script rate-limits to a degree).  
++
++If this happens to you, hit control+alt+F1, log into the TTY, and execute this: 
++sudo systemctl restart lightdm.service. 
+--- litebook-hdmi-fixes-1.1.orig/litebook-hdmi-setup.sh
++++ litebook-hdmi-fixes-1.1/litebook-hdmi-setup.sh
+@@ -9,6 +9,8 @@
+ set -o errexit      # exits if non-true exit status is returned
+ set -o nounset      # exits if unset vars are present
+ 
++PATH=/usr/local/bin:/usr/bin:/bin:/sbin:/usr/sbin:/usr/local/sbin
++
+ # fail if not running as root
+ if [[ $EUID -ne 0 ]] ; then
+ 	echo "This is the _only_ litebook-hdmi script that requires root privileges." ;
+@@ -16,8 +18,6 @@ if [[ $EUID -ne 0 ]] ; then
+ 	exit 1 ;
+ fi
+ 
+-PATH=/usr/local/bin:/usr/bin:/bin:/sbin:/usr/sbin:/usr/local/sbin
+-
+ cur_user="$(who | grep ":0" | cut -f 1 -d ' ' | uniq)"
+ 
+ # needed to call the current display
+@@ -42,6 +42,7 @@ while true ; do
+ 		echo "The monitor nickname must be one word or separated by underscores"
+ 	fi
+ done
++
+ echo
+ echo "${mon_nick} assigned.  Continuing setup.
+ Testing if HDMI is connected"
+@@ -51,10 +52,16 @@ echo
+ cp /etc/litebook-scripts/scripts/hdmi/99-hdmi-xorg-template.txt \
+ 	/etc/litebook-scripts/scripts/hdmi/99-"${mon_nick}"-hdmi.tmp
+ 
+-# begin configuring final HDMI startup script
++# configure directory structure
+ if [[ ! -d /home/"${cur_user}"/bin/litebook ]] ; then
+ 	sudo -u "${cur_user}" mkdir -p /home/"${cur_user}"/bin/litebook
+ fi
++if [[ ! -d /etc/X11/xorg.conf.d ]] ; then
++	mkdir /etc/X11/xorg.conf.d
++fi
++mkdir -p /usr/litebook/hdmi-edids
++
++# configure final HDMI start and stop scripts
+ sudo -u "${cur_user}" cp /etc/litebook-scripts/scripts/hdmi/litebook-hdmi-template.sh \
+ 	/home/"${cur_user}"/bin/litebook/"${mon_nick}"-hdmi-start.sh
+ sudo -u "${cur_user}" cp /etc/litebook-scripts/scripts/hdmi/litebook-hdmi-stop.sh \
+@@ -62,10 +69,10 @@ sudo -u "${cur_user}" cp /etc/litebook-s
+ chown "${cur_user}":"${cur_user}" /home/"${cur_user}"/bin/litebook/litebook-hdmi-stop.sh
+ 
+ # var to establish HDMI status, now that read-edid is installed
+-hdmi_test="$(get-edid | parse-edid | grep Identifier | grep @ || echo "")"
++hdmi_test="$(get-edid | parse-edid | grep Identifier)"
+ 
+ # ensure that HDMI is plugged in
+-if [[ -n "${hdmi_test}" ]] ; then
++if [[ "${hdmi_test}" =~ "@" ]] ; then
+ 	echo "HDMI must be plugged in to complete HDMI setup."
+ 	echo "Please connect your HDMI device and select Continue."
+ 	select cont in "Continue" "Exit" ; do
+@@ -73,14 +80,16 @@ if [[ -n "${hdmi_test}" ]] ; then
+ 			Continue ) 
+ 				hdmi_test="$(get-edid | parse-edid | grep Identifier)"
+ 				if [[ "${hdmi_test}" =~ "@" ]] ; then
++					echo
+ 					echo "HDMI device not found."
+ 				else
++					echo
+ 					echo "HDMI device found.  Continuing setup."
+ 					break
+ 				fi
+ 				;;
+ 			Exit ) 
+-				echo "Exiting the HDMI startup process."
++				echo "Exiting the HDMI setup process."
+ 				exit 0
+ 				;;
+ 			* )
+@@ -91,13 +100,11 @@ if [[ -n "${hdmi_test}" ]] ; then
+ fi
+ 
+ # grab HDMI monitor EDID, and place findings in usr and xorg.conf.d
+-mkdir -p /usr/litebook/hdmi-edids
+ echo "Gathering ${mon_nick} monitor information"
+ echo
+ 
+-
+ get-edid > /usr/litebook/hdmi-edids/"${mon_nick}".bin
+-sed -i "s|edids/|edids/${mon_nick}.bin|" /etc/litebook-scripts/scripts/hdmi/99-"${mon_nick}"-hdmi.tmp
++sed -i "s|edids/|edids/${mon_nick}.bin\"|" /etc/litebook-scripts/scripts/hdmi/99-"${mon_nick}"-hdmi.tmp
+ 
+ # monitor-specific vars
+ edid_used="/usr/litebook/hdmi-edids/${mon_nick}.bin"
+@@ -133,7 +140,7 @@ done
+ if [[ "${cust_res}" == 1 ]] ; then
+ 	while true ; do
+ 	read -p "What is the monitor resolution?  Please enter as 1234x5678 : " mon_res
+-		if [[ -n "$(echo "${mon_res}" | grep -E "[0-9]x[0-9]")" ]] ; then
++		if [[ -n "$(echo "${mon_res}" | grep -E "[0-9]{1,16}x[0-9]{1,16}")" ]] ; then
+ 			echo "OK, using ${mon_res} as the new resolution"
+ 			break
+ 		else
+@@ -146,9 +153,11 @@ fi
+ # modify base HDMI config
+ sed -i "s/DisplaySize /DisplaySize ${disp_size}/" /etc/litebook-scripts/scripts/hdmi/99-"${mon_nick}"-hdmi.tmp
+ sed -i "s/Modeline \"1920x1080_60.00\"/Modeline \"1920x1080_60.00\" ${mlines}/" /etc/litebook-scripts/scripts/hdmi/99-"${mon_nick}"-hdmi.tmp
+-if [[ -n "${cust_res}" ]] ; then
+-	sed -i "s/1920x1080_60.00/${cust_res}_60.00/g" /etc/litebook-scripts/scripts/hdmi/99-"${mon_nick}"-hdmi.tmp ;
+-	sed -i "s/1920x1080/${cust_res}/g" /home/"${cur_user}"/bin/litebook/"${mon_nick}"-hdmi-start.sh ;
++
++# modify resolution, if custom res is specified
++if [[ "${cust_res}" == 1 ]] ; then
++	sed -i "s/1920x1080_60.00/${mon_res}_60.00/g" /etc/litebook-scripts/scripts/hdmi/99-"${mon_nick}"-hdmi.tmp ;
++	sed -i "s/1920x1080/${mon_res}/g" /home/"${cur_user}"/bin/litebook/"${mon_nick}"-hdmi-start.sh ;
+ fi	
+ 
+ # install finished HDMI and eDP templates into xorg.conf.d
+--- litebook-hdmi-fixes-1.1.orig/litebook-hdmi-start.sh
++++ litebook-hdmi-fixes-1.1/litebook-hdmi-start.sh
+@@ -9,6 +9,8 @@
+ set -o errexit      # exits if non-true exit status is returned
+ set -o nounset      # exits if unset vars are present
+ 
++PATH=/usr/local/bin:/usr/bin:/bin:/sbin:/usr/sbin:/usr/local/sbin
++
+ # fail _if_ running as root
+ if [[ $EUID == 0 ]] ; then
+ 	echo "This script should not be run with root privileges." ;
+@@ -16,10 +18,8 @@ if [[ $EUID == 0 ]] ; then
+ 	exit 1 ;
+ fi
+ 
+-PATH=/usr/local/bin:/usr/bin:/bin:/sbin:/usr/sbin:/usr/local/sbin
+-
+ mons_avail="$(find /home/"$(whoami)"/bin/litebook/ -type f -name "*hdmi-start.sh" | \
+-	sed s/-hdmi-start.sh// | sed "s|/home/$(whoami)/bin/litebook/||")"
++	sed 's/-hdmi-start.sh//' | sed "s|/home/$(whoami)/bin/litebook/||")"
+ 
+ # needed to call the current display
+ DISPLAY=:0
+@@ -27,7 +27,7 @@ export DISPLAY
+ XAUTHORITY=/home/"$(whoami)"/.Xauthority
+ export XAUTHORITY
+ 
+-echo "Testing if HDMI is connected Please enter your password"
++echo "Testing if HDMI is connected.  Please enter your password"
+ echo
+ 
+ hdmi_test="$(sudo -k get-edid | parse-edid | grep Identifier)"
+@@ -65,25 +65,21 @@ while true ; do
+ 	echo "The monitors available are: ${mons_avail}"
+ 	read -p "which monitor do you want to use : " mon_used
+ 	if [[ "${mon_used}" =~ ${mons_avail} ]] ; then
++		echo
+ 		echo "${mon_used} selected.  Continuing to activation." ;
+ 		break
+ 	else
++		echo
+ 		echo "That selection is invalid.  Please choose a listed monitor."
+ 	fi		
+ done
+ 
+-# define resolution, now that we know which monitor is used
+-mon_res="$(grep -Eo "[0-9]{1,16}x[0-9]{1,16}" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh | uniq)"
+-
+-# establish HDMI output via xrandr
+-xrandr --addmode HDMI1 "${mon_res}"
+-
+ # establish HDMI screen position
+ echo
+ echo "Now to position the HDMI output.  
+ Do you want to mirror or extend the Litebook screen?"
+ echo
+-select pos in "Mirror-display" "Extend-right" "Extend-down"; do
++select pos in "Mirror-display" "Extend-right" "Extend-down" ; do
+ 	case $pos in
+ 		Mirror-display ) 
+ 			echo "Mirroring current display"
+@@ -106,21 +102,21 @@ select pos in "Mirror-display" "Extend-r
+ 	esac
+ done
+ 
+-# set position in home HDMI template
+-sed -i "s/--POS/${mon_pos}/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh
+-
+-# set magnification based on position with known working values
++# set the position and magnification (mag uses known working values based on position)
+ if [[ "${mon_pos}" == "m" ]] ; then
+-	xrandr --output HDMI1 --mode "${mon_res}" --transform 1.05,0,0,0,1.05,0,0,0,1 --same-as eDP1
++	sed -i "s/--POS/--same-as eDP1/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh
+ 	sed -i "s/--TRANS/--transform 1.05,0,0,0,1.05,0,0,0,1/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh
+ elif [[ "${mon_pos}" == "r" ]] ; then
+-	xrandr --output HDMI1 --mode "${mon_res}" --transform 1.1,0,0,0,1.1,0,0,0,1 --right-of eDP1
++	sed -i "s/--POS/--right-of eDP1/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh
+ 	sed -i "s/--TRANS/--transform 1.1,0,0,0,1.1,0,0,0,1/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh
+ else
+-	xrandr --output HDMI1 --mode "${mon_res}" --transform 1.1,0,0,0,1.1,0,0,0,1 --below eDP1
++	sed -i "s/--POS/--below eDP1/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh
+ 	sed -i "s/--TRANS/--transform 1.1,0,0,0,1.1,0,0,0,1/" /home/"$(whoami)"/bin/litebook/"${mon_used}"-hdmi-start.sh
+ fi
+ 
++# activate the display
++cd /home/"$(whoami)"/bin/litebook/ && ./"${mon_used}"-hdmi-start.sh
++
+ # wrap everything up
+ echo 
+ echo "HDMI setup is now complete.  All settings are stored in ~/bin/litebook/${mon_used}-hdmi-start.sh
+@@ -130,6 +126,8 @@ not retain settings on its own.  If you
+ running this script. 
+ 
+ If you have any overscan/underscan issues, they can be fixed by running
+-/etc/litebook-scripts/scripts/litebook-hdmi-output-adjuster.sh"
++/etc/litebook-scripts/scripts/litebook-hdmi-output-adjuster.sh.
++
++For further info, please consult /etc/litebook-scripts/info/litebook-hdmi-fixes.info"
+ 
+ exit 0

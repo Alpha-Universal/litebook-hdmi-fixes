@@ -1,0 +1,8 @@
+99-edp-monitor.conf etc/litebook-scripts/scripts/hdmi
+99-hdmi-xorg-template.txt etc/litebook-scripts/scripts/hdmi
+litebook-hdmi-setup.sh etc/litebook-scripts/scripts/hdmi
+litebook-hdmi-start.sh etc/litebook-scripts/scripts/hdmi
+litebook-hdmi-stop.sh etc/litebook-scripts/scripts/hdmi
+litebook-hdmi-adjuster.sh etc/litebook-scripts/scripts/hdmi
+litebook-hdmi-template.sh etc/litebook-scripts/scripts/hdmi
+litebook-hdmi-fixes.info etc/litebook-scripts/info

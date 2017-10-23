@@ -1,0 +1,14 @@
+litebook-hdmi-fixes (1.1-1) experimental; urgency=low
+
+  * Syntax cleanups and info file addition (Closes: #10000)
+  * Fixed typos and syntax errors, refined vars and xrandr calls,
+  * and clarified comments.
+
+ -- Richard Buchanan II <richard@alpha.store>  Sun, 18 Jun 2017 18:16:49 -0500
+
+litebook-hdmi-fixes (1.0-1) experimental; urgency=low
+
+  * Initial release (Closes: #12345)  
+  * Added all litebook-hdmi* conf files, scripts, and templates.
+
+ -- Richard Buchanan II <richard@alpha.store>  Thu, 25 May 2017 9:10:49 -0500

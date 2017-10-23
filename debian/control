@@ -1,0 +1,18 @@
+Source: litebook-hdmi-fixes
+Section: X11
+Priority: optional
+Maintainer: Richard Buchanan II <richard@alpha.store>
+Build-Depends: debhelper (>= 9)
+Standards-Version: 3.9.6
+Homepage: https://github.com/Alpha-Universal/litebook-hdmi-fixes
+
+Package: litebook-hdmi-fixes
+Architecture: all
+Depends: ${misc:Depends}
+Description: Scripts to enable Litebook v1 HDMI output.
+ This package includes conf files and scripts to 
+ configure, enable, and adjust HDMI output for the 
+ Litebook v1.
+ .
+ As of late-May 2017, HDMI will not function on the 
+ Litebook without these scripts.
